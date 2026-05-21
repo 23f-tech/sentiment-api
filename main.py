@@ -19,30 +19,22 @@ class SentimentRequest(BaseModel):
     sentences: List[str]
 
 
-class SentimentResult(BaseModel):
-    sentence: str
-    sentiment: str
-
-
-class SentimentResponse(BaseModel):
-    results: List[SentimentResult]
-
-
 happy_words = {
     "love", "loved", "like", "liked", "great", "excellent", "amazing",
     "awesome", "fantastic", "wonderful", "good", "best", "happy",
-    "glad", "joy", "joyful", "delight", "delighted", "perfect",
-    "positive", "enjoy", "enjoyed", "satisfied", "success", "win",
-    "brilliant", "nice", "beautiful", "thank", "thanks", "helpful"
+    "glad", "joy", "joyful", "perfect", "positive", "enjoy",
+    "enjoyed", "satisfied", "success", "brilliant", "nice",
+    "beautiful", "thanks", "thank", "helpful", "excited",
+    "excellent", "cool", "fun", "win", "winner", "pleased"
 }
 
 sad_words = {
     "sad", "bad", "terrible", "awful", "horrible", "hate", "hated",
     "angry", "upset", "disappointed", "disappointing", "poor",
-    "worst", "pain", "hurt", "cry", "crying", "failed", "fail",
-    "failure", "problem", "issue", "broken", "wrong", "negative",
-    "unhappy", "annoyed", "frustrated", "delay", "delayed", "loss",
-    "lost", "sorry", "regret", "boring", "useless"
+    "worst", "pain", "hurt", "cry", "failed", "fail", "failure",
+    "problem", "issue", "broken", "wrong", "negative", "unhappy",
+    "annoyed", "frustrated", "delay", "delayed", "loss", "lost",
+    "sorry", "regret", "boring", "useless", "disaster", "rude"
 }
 
 
@@ -53,15 +45,35 @@ def classify_sentiment(sentence: str) -> str:
     happy_score = sum(1 for word in words if word in happy_words)
     sad_score = sum(1 for word in words if word in sad_words)
 
-    # Extra phrase handling
     happy_phrases = [
-        "well done", "very good", "so good", "really good",
-        "works well", "love this", "thank you"
+        "well done",
+        "very good",
+        "so good",
+        "really good",
+        "works well",
+        "love this",
+        "thank you",
+        "i am happy",
+        "i'm happy",
+        "i feel good",
+        "made my day",
+        "great job"
     ]
 
     sad_phrases = [
-        "not good", "very bad", "so bad", "really bad",
-        "does not work", "did not work", "too slow", "waste of time"
+        "not good",
+        "very bad",
+        "so bad",
+        "really bad",
+        "does not work",
+        "did not work",
+        "doesn't work",
+        "too slow",
+        "waste of time",
+        "i am sad",
+        "i'm sad",
+        "i feel bad",
+        "let me down"
     ]
 
     for phrase in happy_phrases:
@@ -74,13 +86,14 @@ def classify_sentiment(sentence: str) -> str:
 
     if happy_score > sad_score:
         return "happy"
-    elif sad_score > happy_score:
+
+    if sad_score > happy_score:
         return "sad"
-    else:
-        return "neutral"
+
+    return "neutral"
 
 
-@app.post("/sentiment", response_model=SentimentResponse)
+@app.post("/sentiment")
 async def sentiment_analysis(request: SentimentRequest):
     return {
         "results": [
@@ -91,6 +104,11 @@ async def sentiment_analysis(request: SentimentRequest):
             for sentence in request.sentences
         ]
     }
+
+
+@app.post("/")
+async def sentiment_analysis_root(request: SentimentRequest):
+    return await sentiment_analysis(request)
 
 
 @app.get("/")
